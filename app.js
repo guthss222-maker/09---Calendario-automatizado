@@ -11,16 +11,7 @@ const FACTORIES = ["Fábrica I", "Fábrica III - P1", "Fábrica III - P2", "Fáb
 
 // Para renomear ou incluir áreas, é só editar esta lista (a ordem define a ordem do seletor)
 const AREAS = [
-  "Cabine Seca 1",
-  "Cabine Seca 2 ",
-  "Cabine Seca 3 ",
-  "Cabine Seca 4 ",
-  "Cabine Seca Tropicalizado ",
-  "Cabine Úmida 1 ",
-  "Cabine Úmida 2",
-  "Cabine Úmida 3 ",
-  "Cabine Úmida 5",
-  "Cabine Úmida 6",
+  "Cabines de pintura ",
   "Sala de preparação"
 ];
 
