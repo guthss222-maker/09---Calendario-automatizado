@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Gestão de Auditorias e Planos de Ação</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&family=Fraunces:wght@600&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="readonly">
+
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Gestão de Auditorias</h1>
+        <p class="sub">Painel corporativo de controle, planejamento e acompanhamento de tarefas.</p>
+      </div>
+      <div class="hdr-actions">
+        <button class="btn" id="btnTheme" title="Alternar tema: automático, claro ou escuro">🌓 Auto</button>
+        <button class="btn" id="btnAuditorMode">🔒 Entrar como auditor</button>
+        <button class="btn pbi" id="openTop">Abrir Power BI</button>
+      </div>
+    </header>
+
+    <!-- RESUMO: ÚLTIMA E PRÓXIMA AUDITORIA -->
+    <div class="summary-grid">
+      <section class="card summary-card last" aria-label="Última auditoria realizada">
+        <span class="box-label">ÚLTIMA AUDITORIA REALIZADA</span>
+        <p id="lastTitle" class="sum-title">-</p>
+        <p id="lastDate" class="sum-date">-</p>
+        <p id="lastMeta" class="sum-meta">-</p>
+      </section>
+      <section class="card summary-card next" aria-label="Próxima auditoria">
+        <span class="box-label">PRÓXIMA AUDITORIA</span>
+        <p id="nextTitle" class="sum-title">-</p>
+        <p id="nextDate" class="sum-date">-</p>
+        <p id="nextMeta" class="sum-meta">-</p>
+      </section>
+    </div>
+
+    <!-- ÚLTIMA E PRÓXIMA AUDITORIA DE CADA FÁBRICA -->
+    <section class="card factories-card" aria-label="Auditorias por fábrica">
+      <h2>Auditorias por Fábricas</h2>
+      <div class="factory-grid" id="factoryGrid"></div>
+    </section>
+
+    <div class="stack-layout">
+
+      <!-- 1. CALENDÁRIO E REGISTO DE NOVAS AUDITORIAS -->
+      <div class="top-grid">
+        <section class="card" aria-label="Calendário">
+          <div class="mh">
+            <button class="btn" id="btnPrevMonth" aria-label="Mês anterior">‹</button>
+            <strong id="monthTitle"></strong>
+            <button class="btn" id="btnNextMonth" aria-label="Próximo mês">›</button>
+          </div>
+          <div class="cal" id="calendarGrid"></div>
+        </section>
+
+        <section class="card edit-only">
+          <h2>Registar Nova Auditoria</h2>
+
+          <div class="row2">
+            <div>
+              <label for="inputDate">Data Planejada</label>
+              <input type="date" id="inputDate">
+            </div>
+            <div>
+              <label for="inputRealDate">Data Realizada</label>
+              <input type="date" id="inputRealDate">
+            </div>
+          </div>
+
+          <label for="inputTitle">Título / Descrição da Auditoria</label>
+          <input id="inputTitle" placeholder="Ex.: Auditoria Cabine Seca">
+
+          <div class="row2">
+            <div>
+              <label for="inputFactory">Fábrica</label>
+              <select id="inputFactory"></select>
+            </div>
+            <div>
+              <label for="inputArea">Área / Departamento</label>
+              <input id="inputArea" placeholder="Ex.: Montagem I">
+            </div>
+            <div>
+              <label for="selectStatus">Situação Inicial</label>
+              <select id="selectStatus">
+                <option value="Agendada">Agendada</option>
+                <option value="Não concluído">Não concluído</option>
+                <option value="Falta passar para planilha">Falta passar para planilha</option>
+                <option value="Concluída">Concluída</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="inputPeople">Auditores (separe por vírgula)</label>
+          <input id="inputPeople" placeholder="Ex.: Ana, Carlos">
+
+          <label for="inputLink">Link do relatório no Power BI (opcional)</label>
+          <input id="inputLink" placeholder="https://app.powerbi.com/...">
+
+          <p class="form-actions">
+            <button class="btn pbi" id="btnAddAudit">Adicionar ao Sistema</button>
+          </p>
+        </section>
+      </div>
+
+      <!-- 2. DETALHE DO ITEM SELECIONADO (TASK VIEW) -->
+      <section class="card task-detail-card" id="detailCard">
+        <div class="task-header-row">
+          <span class="badge-tag">Detalhe da Auditoria </span>
+          <span id="detailStatusBadge" class="status-badge">Selecione uma auditoria abaixo</span>
+        </div>
+
+        <div class="info-block-grid">
+          <div class="info-box">
+            <span class="box-label">DESCRIÇÃO / TÍTULO</span>
+            <p id="detTitle" class="box-value">-</p>
+          </div>
+          <div class="info-box">
+            <span class="box-label">ÁREA IMPACTADA</span>
+            <p id="detArea" class="box-value">-</p>
+          </div>
+        </div>
+
+        <div class="info-block-grid-3">
+          <div class="info-box">
+            <span class="box-label">DATAS (INÍCIO)</span>
+            <div class="sub-row"><span>Planejado:</span> <b id="detDatePlan">-</b></div>
+            <div class="sub-row"><span>Realizado:</span> <b id="detDateReal">-</b></div>
+            <div class="sub-row"><span>Válida até:</span> <b id="detValidity">-</b></div>
+          </div>
+          <div class="info-box">
+            <span class="box-label">SITUAÇÃO ATUAL</span>
+            <div class="sub-row" style="margin-top: 4px;"><span id="detStatusText">-</span></div>
+          </div>
+          <div class="info-box">
+            <span class="box-label">LINK POWER BI</span>
+            <div class="sub-row" style="margin-top: 4px;" id="detLinkContainer">-</div>
+          </div>
+        </div>
+
+        <div class="section-block-title">Equipe / Auditores Responsáveis</div>
+        <div class="team-container">
+          <div class="team-row">
+            <strong>Auditores:</strong> <span id="detPeople">-</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. PLANO DE AÇÃO E LISTA DE AUDITORIAS -->
+      <section class="card">
+        <div class="mh" style="margin-bottom: 12px;">
+          <h2 style="margin:0; font-size: 18px;">Lista de Auditorias</h2>
+        </div>
+        <ul class="list" id="auditList"></ul>
+      </section>
+
+    </div>
+
+    <!-- Rodapé Power BI Link Geral -->
+    <section class="card bi" aria-label="Power BI" style="margin-top: 16px;">
+      <div class="bih">
+        <h2 style="margin:0">Painel Power BI Geral</h2>
+        <button class="btn pbi" id="openBi">Abrir painel completo</button>
+      </div>
+      <label class="edit-only" for="powerBiLink">Link do seu painel no Power BI</label>
+      <div class="lk edit-only">
+        <input id="powerBiLink" placeholder="Cole aqui o link do relatório (https://app.powerbi.com/...)">
+        <button class="btn" id="btnSaveLink">Salvar link</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Janela de acesso do auditor -->
+  <dialog id="authDialog">
+    <h2>Acesso de auditor</h2>
+    <p class="sub">Digite o PIN para poder editar o painel.</p>
+    <input type="password" id="authPin" placeholder="PIN" autocomplete="off">
+    <label class="remember"><input type="checkbox" id="authRemember"> Lembrar neste computador</label>
+    <p id="authError" class="auth-error"></p>
+    <div class="auth-actions">
+      <button class="btn" id="authCancel">Cancelar</button>
+      <button class="btn pbi" id="authOk">Entrar</button>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
