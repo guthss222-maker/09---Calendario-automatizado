@@ -9,10 +9,21 @@ const LINK_STORAGE_KEY = "cal-auditorias-link-v5";
 // Para renomear as fábricas, é só editar esta lista (a ordem define a ordem do painel)
 const FACTORIES = ["Fábrica I", "Fábrica III - P1", "Fábrica III - P2", "Fábrica IV", "Fábrica VI", "Fábrica VII", "Fábrica VIII"];
 
+// Para renomear ou incluir áreas, é só editar esta lista (a ordem define a ordem do seletor)
+const AREAS = [
+  "Cabine Seca 1 - CME",
+  "Cabine Úmida 1 - Normal",
+  "Cabine Úmida 2 - Normal",
+  "Cabine Úmida 3 - Especial",
+  "Cabine Úmida 4 - Especial",
+  "Cabine Seca 2 - Tropicalizado",
+  "Sala de preparação"
+];
+
 const initialAudits = [
-  { id: 1, date: "2026-11-05", realDate: "2026-11-06", title: "Auditoria interna ISO 9001", factory: "Fábrica I", area: "Qualidade", people: ["Ana", "Carlos"], status: "Concluída", link: "https://app.powerbi.com/" },
-  { id: 2, date: "2026-11-12", realDate: "", title: "Auditoria de fornecedor", factory: "Fábrica II", area: "Compras", people: ["Carlos"], status: "Agendada", link: "" },
-  { id: 3, date: "2026-11-18", realDate: "", title: "Auditoria ambiental", factory: "Fábrica III", area: "Manutenção", people: ["Juliana", "Marcos"], status: "Falta passar para planilha", link: "" }
+  { id: 1, date: "2026-11-05", realDate: "2026-11-06", title: "Auditoria interna ISO 9001", factory: "Fábrica I", area: "Cabine Seca 1 - CME", people: ["Ana", "Carlos"], status: "Concluída", link: "https://app.powerbi.com/" },
+  { id: 2, date: "2026-11-12", realDate: "", title: "Auditoria de fornecedor", factory: "Fábrica III - P1", area: "Cabine Úmida 1 - Normal", people: ["Carlos"], status: "Agendada", link: "" },
+  { id: 3, date: "2026-11-18", realDate: "", title: "Auditoria ambiental", factory: "Fábrica IV", area: "Sala de preparação", people: ["Juliana", "Marcos"], status: "Falta passar para planilha", link: "" }
 ];
 
 let auditsData = loadFromStorage(STORAGE_KEY, initialAudits);
@@ -44,9 +55,12 @@ function setAuditor(on, remember) {
 
 // Auditorias já salvas antes de existir o campo "Fábrica": tenta descobrir pelo texto da área (ex.: "Qualidade / Fábrica IV")
 function inferFactory(audit) {
-  const romans = ["I", "II", "III", "IV", "V", "VI", "VII"];
-  const m = String(audit.area || "").match(/f[áa]brica\s+(VII|VI|IV|V|III|II|I)\b/i);
-  return m ? FACTORIES[romans.indexOf(m[1].toUpperCase())] : "";
+  const escapar = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const text = String(audit.area || "");
+  const found = FACTORIES
+    .filter(f => new RegExp(escapar(f) + "(?![\\p{L}\\p{N}])", "iu").test(text))
+    .sort((a, b) => b.length - a.length)[0];
+  return found || "";
 }
 auditsData.forEach(a => { if (a.factory === undefined) a.factory = inferFactory(a); });
 let powerBiLink = loadFromStorage(LINK_STORAGE_KEY, "");
@@ -91,9 +105,13 @@ function escapeHtml(text) {
   });
 }
 
+// Texto exibido de cada situação (o valor interno salvo continua o mesmo)
+const STATUS_LABELS = { "Falta passar para planilha": "Falta passar para planilha / PowerBI" };
+function statusLabel(status) { return STATUS_LABELS[status] || status; }
+
 function getAuditStatusInfo(audit) {
-  if (audit.status === "Concluída" || audit.status === "Falta passar para planilha/ PowerBI" || audit.status === "Não concluído") {
-    return { status: audit.status, label: audit.status };
+  if (audit.status === "Concluída" || audit.status === "Falta passar para planilha" || audit.status === "Não concluído") {
+    return { status: audit.status, label: statusLabel(audit.status) };
   }
   const auditDate = new Date(audit.date + "T00:00:00");
   const todayDate = new Date(todayIsoString + "T00:00:00");
@@ -102,7 +120,7 @@ function getAuditStatusInfo(audit) {
     const diffDays = Math.ceil(Math.abs(todayDate - auditDate) / (1000 * 60 * 60 * 24));
     return { status: "Atrasado", label: `Atrasado (${diffDays} ${diffDays === 1 ? 'dia' : 'dias'})` };
   }
-  return { status: audit.status || "Agendada", label: audit.status || "Agendada" };
+  return { status: audit.status || "Agendada", label: statusLabel(audit.status || "Agendada") };
 }
 
 function getSafeStatusClass(status) {
@@ -375,7 +393,7 @@ function renderAuditList() {
                 <span class="status-dot dot-Não-concluído"></span> Não concluído
               </button>
               <button class="status-option-btn" data-set-status="${audit.id}" data-value="Falta passar para planilha">
-                <span class="status-dot dot-Falta-passar-para-planilha"></span> Planilha
+                <span class="status-dot dot-Falta-passar-para-planilha"></span> Planilha / PowerBI
               </button>
               <button class="status-option-btn" data-set-status="${audit.id}" data-value="Concluída">
                 <span class="status-dot dot-Concluída"></span> Concluída
@@ -452,7 +470,7 @@ function registerEvents() {
     auditsData.push(newAudit);
     selectedAuditId = newAudit.id;
 
-    ["inputTitle", "inputArea", "inputPeople", "inputLink", "inputRealDate"].forEach(id => document.getElementById(id).value = "");
+    ["inputTitle", "inputPeople", "inputLink", "inputRealDate"].forEach(id => document.getElementById(id).value = "");
     updateUI();
   };
 
@@ -571,6 +589,7 @@ function registerEvents() {
 }
 
 function init() {
+  document.getElementById("inputArea").innerHTML = AREAS.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
   document.getElementById("inputFactory").innerHTML = FACTORIES.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join("");
   document.getElementById("powerBiLink").value = powerBiLink;
   document.getElementById("inputDate").value = todayIsoString;
